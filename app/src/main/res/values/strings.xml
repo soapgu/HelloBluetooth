@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">HelloBluetooth</string>
+    <string name="scan">scan</string>
+    <string name="discoverability">discoverability</string>
+</resources>
