@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     BluetoothLeScanner scanner;
+    ScanSettings settings;
 
     ActivityResultLauncher<Intent> mDiscoverability = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -74,6 +76,9 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(receiver, filter);
         scanner = bluetoothAdapter.getBluetoothLeScanner();
+        ScanSettings.Builder builder = new ScanSettings.Builder();
+        builder.setScanMode( ScanSettings.SCAN_MODE_LOW_LATENCY );
+        this.settings = builder.build();
         this.initializeControls();
     }
 
@@ -102,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
                 //bluetoothAdapter.startDiscovery();
                 if( !isScan ) {
                     scanOutput = new StringBuilder();
-                    scanner.startScan(mLeScanCallback);
+                    scanner.startScan( null , this.settings , mLeScanCallback);
                 }
                 else {
                     scanner.stopScan(mLeScanCallback);
