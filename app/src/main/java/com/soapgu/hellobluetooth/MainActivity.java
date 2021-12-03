@@ -19,6 +19,10 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconParser;
+
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     BluetoothLeScanner scanner;
     ScanSettings settings;
+    BeaconParser beaconParser;
+
 
     ActivityResultLauncher<Intent> mDiscoverability = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -45,10 +51,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            if( result.getDevice().getName() != null )
+
+            Beacon beacon = beaconParser.fromScanData( result.getScanRecord().getBytes() , result.getRssi() , result.getDevice() , 0 );
+
+            if( beacon != null ) {
                 scanDeviceView.setText(scanOutput.append(result.getDevice().getName())
-                        .append(  String.format( "(%s dBm)" , result.getRssi() ) )
+                        .append(String.format("(%s dBm)", result.getRssi()))
+                         .append( String.format( "( uuid:%s major:%s minor:%s  ) ", beacon.getId1() , beacon.getId2(),beacon.getId3()) )
                         .append("\r\n"));
+            }
+
         }
 
         @Override
@@ -72,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(receiver, filter);
@@ -79,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
         ScanSettings.Builder builder = new ScanSettings.Builder();
         builder.setScanMode( ScanSettings.SCAN_MODE_LOW_LATENCY );
         this.settings = builder.build();
+        this.beaconParser = new BeaconParser()
+                .setBeaconLayout(BeaconLayouts.IBEACON);
         this.initializeControls();
     }
 
