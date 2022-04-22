@@ -1,6 +1,7 @@
 package com.soapgu.hellobluetooth;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -71,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
             });
 
     ScanCallback mLeScanCallback = new ScanCallback() {
+        @SuppressLint("MissingPermission")
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        @SuppressLint("MissingPermission")
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             super.onBatchScanResults(results);
@@ -150,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(receiver);
     }
 
+    @SuppressLint("MissingPermission")
     private void initializeControls(){
         this.existDeviceView = this.findViewById(R.id.existDeviceView);
         this.scanDeviceView = this.findViewById(R.id.scanDeviceView);
@@ -157,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
         searchButton = this.findViewById(R.id.searchButton);
         searchButton.setOnClickListener( v ->{
             if( bluetoothAdapter.isEnabled() ){
-                Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+                 Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
                 if( !pairedDevices.isEmpty() ) {
                     StringBuilder existOutput = new StringBuilder();
                     for (BluetoothDevice device : pairedDevices) {
@@ -189,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
         } );
     }
 
+    @SuppressLint("MissingPermission")
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
