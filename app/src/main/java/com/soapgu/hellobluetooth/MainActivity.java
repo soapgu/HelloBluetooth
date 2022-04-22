@@ -1,5 +1,6 @@
 package com.soapgu.hellobluetooth;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -10,6 +11,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -18,6 +21,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 
 import org.altbeacon.beacon.Beacon;
@@ -45,6 +49,25 @@ public class MainActivity extends AppCompatActivity {
             result -> {
                 String message = result.getResultCode() > 0 ? String.format( "蓝牙被发现%s秒",result.getResultCode()) : "被取消";
                 Toast.makeText( getApplicationContext() , message , Toast.LENGTH_SHORT).show();
+            });
+
+    ActivityResultLauncher<Intent> mBluetoothEnable = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                boolean success = result.getResultCode() == RESULT_OK;
+                String message = success ? "蓝牙开始成功": "蓝牙开启失败";
+                Toast.makeText( getApplicationContext() , message , Toast.LENGTH_SHORT).show();
+                if( success ){
+                    initBlueTooth();
+                }
+            });
+
+    ActivityResultLauncher<String> mRequestPermission = registerForActivityResult( new ActivityResultContracts.RequestPermission() ,
+            result -> {
+                Toast.makeText( getApplicationContext() , result ? "同意,请重试":"拒绝", Toast.LENGTH_SHORT).show();
+                if( result ){
+                    checkAndInitBlueTooth();
+                }
             });
 
     ScanCallback mLeScanCallback = new ScanCallback() {
@@ -88,9 +111,33 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(receiver, filter);
+        this.checkPermission();
+    }
+
+    private void checkPermission(){
+        String permission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? Manifest.permission.ACCESS_FINE_LOCATION : Manifest.permission.ACCESS_COARSE_LOCATION;
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            checkAndInitBlueTooth();
+        }
+        else {
+            mRequestPermission.launch( permission );
+        }
+    }
+
+    private void checkAndInitBlueTooth(){
+        if( bluetoothAdapter != null && bluetoothAdapter.isEnabled() ) {
+            initBlueTooth();
+        }
+        else{
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            mBluetoothEnable.launch( enableBtIntent );
+        }
+    }
+
+    private void initBlueTooth(){
         scanner = bluetoothAdapter.getBluetoothLeScanner();
         ScanSettings.Builder builder = new ScanSettings.Builder();
-        builder.setScanMode( ScanSettings.SCAN_MODE_LOW_LATENCY );
+        builder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY);
         this.settings = builder.build();
         this.beaconParser = new BeaconParser()
                 .setBeaconLayout(BeaconLayouts.IBEACON);
